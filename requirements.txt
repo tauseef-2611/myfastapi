@@ -4,5 +4,7 @@ monai
 numpy-stl
 trimesh
 scikit-learn
+scikit-image
+torch
 numpy
 nibabel
