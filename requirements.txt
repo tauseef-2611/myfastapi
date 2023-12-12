@@ -1,1 +1,8 @@
 fastapi[all]
+uvicorn
+monai
+numpy-stl
+trimesh
+scikit-learn
+numpy
+nibabel
