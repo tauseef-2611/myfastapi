@@ -30,10 +30,10 @@ class monaimodel:
         )
         from monai.networks.nets import UNet      # Import the UNet neural network architecture
         from monai.networks.layers import Norm 
-        import numpy as np
+        # import numpy as np
         import torch
         import nibabel as nib
-        from stl import mesh
+        # from stl import mesh
         from skimage import measure
         from monai.transforms import Compose, EnsureChannelFirstd
         from monai.inferers import sliding_window_inference
@@ -103,7 +103,7 @@ class monaimodel:
         model = model.to('cpu')
 
         # Load the model's best weights from a saved checkpoint
-        model.load_state_dict(torch.load("best_metric_model.pth", map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load("The Fast API App\\best_metric_model.pth", map_location=torch.device('cpu')))
 
         print("model loaded")
         # Set the model to evaluation mode
@@ -137,88 +137,25 @@ class monaimodel:
     
 
         print("file list fetched")
-        # Converint nii file to stl file
-
-
-        import numpy as np
-        import nibabel as nib
-        from stl import mesh
-        from skimage import measure
-
-
-        # Load the 4D NIfTI file
-        nii_file = nib.load(file_list[0])
-
-        # Get the data as a NumPy array
-        nii_data = nii_file.get_fdata()
-
-        # Initialize empty lists to store vertices and faces
-        all_verts = []
-        all_faces = []
-
-        # Iterate over each 3D volume in the 4D data
-        for t in range(nii_data.shape[-1]):
-            # Extract the 3D volume at time t
-            volume = nii_data[..., t]
-
-            # Generate a mesh for the isosurface at a threshold of 0
-            verts, faces, normals, values = measure.marching_cubes(volume, 0)
-
-            # Append the vertices and faces to the lists
-            all_verts.append(verts)
-            all_faces.append(faces)
-
-        # Combine all vertices and faces into a single mesh
-        combined_verts = np.concatenate(all_verts)
-        combined_faces = np.concatenate(all_faces)
-
-        # Create an STL mesh object for the combined mesh
-        stl_mesh = mesh.Mesh(np.zeros(combined_faces.shape[0], dtype=mesh.Mesh.dtype))
-        for i, f in enumerate(combined_faces):
-            stl_mesh.vectors[i] = combined_verts[f]
-
-        # Save the combined STL mesh to a single file
-        stl_mesh.save('combined_output.stl')
-
-        print("stl file saved")
-        # Converting stl to obj file
-
-        import trimesh
-
-        # Load the STL file
-        stl_file = r"combined_output.stl"
-        mesh = trimesh.load_mesh(stl_file)
-
-        # Save the mesh as an OBJ file in the Kaggle working directory
-        obj_file = r"obj_pred.obj"
-        mesh.export(obj_file, file_type='obj')
-        print("obj file saved")
-
-    def generateObject(fpath):
         import nibabel as nib
         import numpy as np
-        from stl import mesh
         from skimage import measure
-        
+        # Load NIfTI image
+        nifti_img = nib.load(file_list[0])
+        data = nifti_img.get_fdata()
 
-        nifti_file = nib.load(fpath)
-        np_array = nifti_file.get_fdata()
-        verts, faces, normals, values = measure.marching_cubes(np_array, 0)
-        obj_3d = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
-        for i, f in enumerate(faces):
-            obj_3d.vectors[i] = verts[f]
-        obj_3d.save('mask.stl')
-        # Save the combined STL mesh to a single file
-        print("stl file saved")
-        import trimesh
-        # Converting STL to OBJ file
-        stl_file = r"mask.stl"
-        mesh = trimesh.load_mesh(stl_file)
+        # Select a specific time frame (4th dimension)
+        selected_data = data[..., 0]
 
-        # Save the mesh as an OBJ file in the Kaggle working directory
-        obj_file = r"mask.obj"
-        mesh.export(obj_file, file_type='obj')
-        print("obj file saved")
+        # Extract voxel spacing from NIfTI header
+        voxel_spacing = nifti_img.header.get_zooms()[:3]
 
+        # Extract mesh using skimage.measure
+        verts, faces, _, _ = measure.marching_cubes(selected_data, level=0, spacing=voxel_spacing)
 
-    
+        # Save mesh as OBJ
+        with open('obj_pred.obj', 'w') as obj_file:
+            for v in verts:
+                obj_file.write(f"v {v[0]} {v[1]} {v[2]}\n")
+            for f in faces:
+                obj_file.write(f"f {f[0]+1} {f[1]+1} {f[2]+1}\n")
