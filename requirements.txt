@@ -8,3 +8,4 @@ scikit-image
 torch
 numpy
 nibabel
+matplotlib
